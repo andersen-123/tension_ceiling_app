@@ -13,29 +13,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Получение кода
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Установка Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Установка Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.9'
           channel: 'stable'
 
-      # 4. Установка Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 5. Автоматическое принятие лицензий SDK
       - name: Accept Android SDK Licenses
         run: |
           mkdir -p $ANDROID_SDK_ROOT/licenses
@@ -45,26 +40,17 @@ jobs:
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_SDK_ROOT/licenses/google-gdk-license
           echo "e9acab5b5fbb560a72cfaecce8946896ff6aab9d" > $ANDROID_SDK_ROOT/licenses/android-googletv-license
 
-      # 6. КРИТИЧЕСКИЙ ШАГ: Исправление pubspec.yaml
-      # Заменяем несуществующую версию open_filex на стабильную (4.7.0)
-      - name: Fix pubspec.yaml
-        run: |
-          # Эта команда заменяет 'open_filex: ^5.0.4' на 'open_filex: ^4.7.0' в файле pubspec.yaml
-          sed -i 's/open_filex: \^5\.0\.4/open_filex: ^4.7.0/g' pubspec.yaml
-          # Выводим измененную строку для проверки
-          grep "open_filex:" pubspec.yaml
+      - name: Fix pubspec.yaml (Temporary fix for open_filex)
+        run: sed -i 's/open_filex: \^5\.0\.4/open_filex: ^4.7.0/g' pubspec.yaml
 
-      # 7. Установка зависимостей проекта (теперь будет работать)
       - name: Install dependencies
         run: flutter pub get
 
-      # 8. Сборка релизного APK
       - name: Build release APK
         run: |
           flutter build apk --release --no-tree-shake-icons
           echo "✅ APK успешно собран"
 
-      # 9. Загрузка APK как артефакта
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
