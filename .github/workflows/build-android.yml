@@ -3,7 +3,7 @@ name: Build and Release Android APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: # Позволяет запускать сборку вручную
+  workflow_dispatch:
 
 env:
   APP_VERSION_NAME: "1.0.0"
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Установка Java 17 (обязательно для современных Android SDK)
+      # 2. Установка Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -31,12 +31,11 @@ jobs:
           flutter-version: '3.16.9'
           channel: 'stable'
 
-      # 4. Установка Android SDK (ключевое исправление)
+      # 4. Установка Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 5. АВТОМАТИЧЕСКОЕ принятие всех лицензий SDK
-      # Решает проблему с зависанием на запросе "Review licenses... (y/N)?"
+      # 5. Автоматическое принятие лицензий SDK
       - name: Accept Android SDK Licenses
         run: |
           mkdir -p $ANDROID_SDK_ROOT/licenses
@@ -44,14 +43,18 @@ jobs:
           echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
           echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_SDK_ROOT/licenses/google-gdk-license
-          # Добавляем лицензию для Google TV, которая вызвала проблему в логах
           echo "e9acab5b5fbb560a72cfaecce8946896ff6aab9d" > $ANDROID_SDK_ROOT/licenses/android-googletv-license
 
-      # 6. Проверка окружения Flutter (опционально, но полезно для диагностики)
-      - name: Flutter doctor
-        run: flutter doctor -v
+      # 6. КРИТИЧЕСКИЙ ШАГ: Исправление pubspec.yaml
+      # Заменяем несуществующую версию open_filex на стабильную (4.7.0)
+      - name: Fix pubspec.yaml
+        run: |
+          # Эта команда заменяет 'open_filex: ^5.0.4' на 'open_filex: ^4.7.0' в файле pubspec.yaml
+          sed -i 's/open_filex: \^5\.0\.4/open_filex: ^4.7.0/g' pubspec.yaml
+          # Выводим измененную строку для проверки
+          grep "open_filex:" pubspec.yaml
 
-      # 7. Установка зависимостей проекта
+      # 7. Установка зависимостей проекта (теперь будет работать)
       - name: Install dependencies
         run: flutter pub get
 
@@ -61,27 +64,10 @@ jobs:
           flutter build apk --release --no-tree-shake-icons
           echo "✅ APK успешно собран"
 
-      # 9. Загрузка APK как артефакта сборки (используем v4)
+      # 9. Загрузка APK как артефакта
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: App-v${{ env.APP_VERSION_NAME }}-build-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
-
-      # 10. (ОПЦИОНАЛЬНО) Создание GitHub Release
-      # Работает только при ручном запуске (workflow_dispatch)
-      - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: release-v${{ env.APP_VERSION_NAME }}+${{ github.run_number }}
-          name: "Релиз v${{ env.APP_VERSION_NAME }} (Сборка #${{ github.run_number }})"
-          body: |
-            Автоматическая сборка APK через GitHub Actions.
-            Номер запуска: #${{ github.run_number }}
-          draft: false
-          prerelease: false
-          files: build/app/outputs/flutter-apk/app-release.apk
