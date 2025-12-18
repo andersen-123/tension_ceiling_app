@@ -57,12 +57,12 @@ jobs:
           restore-keys: |
             pub-${{ runner.os }}-
 
-      # 7. Временный фикс для несуществующей версии open_filex
-      - name: Fix pubspec.yaml
+      # Шаг: Полное удаление зависимости open_filex
+      - name: Remove open_filex dependency
         run: |
-          # Исправляем версию пакета, чтобы сборка могла продолжиться
-          sed -i 's/open_filex: \^5\.0\.4/open_filex: ^4.7.0/g' pubspec.yaml
-
+          # Удаляем строку с упоминанием open_filex из pubspec.yaml
+          sed -i '/open_filex:/d' pubspec.yaml
+          echo "Пакет open_filex удален для тестовой сборки."
       # 8. Установка зависимостей проекта
       - name: Install dependencies
         run: flutter pub get
