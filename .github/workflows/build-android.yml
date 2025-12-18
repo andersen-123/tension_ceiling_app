@@ -57,12 +57,15 @@ jobs:
           restore-keys: |
             pub-${{ runner.os }}-
 
-      # Шаг: Полное удаление зависимости open_filex
-      - name: Remove open_filex dependency
+      # НОВЫЙ ШАГ: Пытаемся автоматически выполнить миграцию на V2 Embedding
+      - name: Attempt Android V2 Migration
         run: |
-          # Удаляем строку с упоминанием open_filex из pubspec.yaml
-          sed -i '/open_filex:/d' pubspec.yaml
-          echo "Пакет open_filex удален для тестовой сборки."
+          echo "Инициируем попытку автоматической миграции..."
+          # 1. Обновляем проект Flutter (может обновить шаблоны)
+          flutter create --platforms=android . || true
+          # 2. Явно обновляем конфигурацию Android (перезаписываем важные файлы)
+          yes | flutter config --android-embedding-v2 2>/dev/null || true
+          echo "Проверяем состояние Android директории..."
       # 8. Установка зависимостей проекта
       - name: Install dependencies
         run: flutter pub get
