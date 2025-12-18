@@ -3,81 +3,57 @@ name: Build and Release Android APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: # Позволяет запускать сборку вручную из вкладки Actions
+  workflow_dispatch: # Запуск сборки вручную
 
 env:
-  # Основная версия приложения. При каждой сборке номер сборки (run_number) добавится автоматически.
   APP_VERSION_NAME: "1.0.0"
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Используем последний стабильный образ Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
-      # Шаг 1: Получение кода из репозитория
+      # Шаг 1: Получение кода
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Шаг 2: Установка Java (требуется для Android SDK)
-      - name: Set up JDK 11
+      # Шаг 2: УСТАНОВИТЬ JAVA 17 (Ключевое исправление)
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '17' # Меняем с '11' на '17'
           distribution: 'temurin'
 
       # Шаг 3: Установка Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.9' # Рекомендуется указывать конкретную стабильную версию
+          flutter-version: '3.16.9'
           channel: 'stable'
 
-      # Шаг 4: Разрешение лицензий Android SDK
-      - name: Accept Android licenses
+      # Шаг 4: Установка Android SDK и лицензий (Новый корректный способ)
+      # Удаляем старую проблемную команду `yes | sdkmanager --licenses`
+      - name: Setup Android SDK and Accept Licenses
         run: |
-          yes | sdkmanager --licenses || true
-          flutter doctor --android-licenses
+          # Этот шаг гарантирует наличие необходимых компонентов SDK
+          echo "y" | flutter doctor --android-licenses
+          # Двойная проверка от Flutter doctor
+          flutter doctor -v
 
-      # Шаг 5: Проверка окружения Flutter
-      - name: Flutter doctor
-        run: flutter doctor -v
-
-      # Шаг 6: Установка зависимостей проекта
+      # Шаг 5: Установка зависимостей проекта
       - name: Install dependencies
         run: flutter pub get
 
-      # Шаг 7: Сборка релизного APK
+      # Шаг 6: Сборка релизного APK
       - name: Build release APK
         run: |
           flutter build apk --release --no-tree-shake-icons
-          echo "APK собран: $(pwd)/build/app/outputs/flutter-apk/app-release.apk"
+          echo "✅ APK собран успешно"
 
-      # Шаг 8: Загрузка собранного APK как артефакта
-      # ИСПРАВЛЕНИЕ ОШИБКИ: используем v4 вместо deprecated v3
+      # Шаг 7: Загрузка APK как артефакта
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          # Уникальное имя артефакта с номером сборки (требование v4).
-          name: PotolokForLife-v${{ env.APP_VERSION_NAME }}-build-${{ github.run_number }}
+          name: App-v${{ env.APP_VERSION_NAME }}-build-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-release.apk
-          # Артефакт будет доступен 14 дней. Можно скачать со вкладки Actions.
           retention-days: 14
-
-      # (ОПЦИОНАЛЬНО) Шаг 9: Создание GitHub Release и прикрепление APK
-      # Работает только при триггере workflow_dispatch (ручной запуск) или по тегу.
-      # Требует дополнительной настройки ключей подписи (см. инструкцию ниже).
-      - name: Create GitHub Release & Upload APK
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: release-v${{ env.APP_VERSION_NAME }}+${{ github.run_number }}
-          name: "Релиз v${{ env.APP_VERSION_NAME }} (Сборка #${{ github.run_number }})"
-          body: |
-            Автоматическая сборка APK.
-            Номер запуска: #${{ github.run_number }}
-            Собрано: ${{ github.event.head_commit.timestamp }}
-          draft: false
-          prerelease: false
-          files: build/app/outputs/flutter-apk/app-release.apk
