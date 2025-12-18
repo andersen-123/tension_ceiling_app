@@ -56,10 +56,9 @@ steps:
 
       flutter pub get
 
-  - name: Build release APK
-    run: |
-      flutter build apk --release --no-tree-shake-icons
-      echo "✅ APK собран"
+  - name: Build debug APK
+  run: |
+    flutter build apk --debug --no-tree-shake-icons
 
   - name: Verify APK exists
     run: |
