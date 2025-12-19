@@ -2,60 +2,60 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
-
-env:
-  APP_VERSION_NAME: "1.0.0"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # 1. Получаем код
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      # 2. Настраиваем Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # 3. Настраиваем Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.9'
           channel: 'stable'
-          cache: true
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android SDK Licenses
+      # 4. Разрешения для Android
+      - name: Accept Android licenses
         run: |
-          mkdir -p $ANDROID_SDK_ROOT/licenses
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $ANDROID_SDK_ROOT/licenses/android-sdk-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_SDK_ROOT/licenses/android-sdk-preview-license
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_SDK_ROOT/licenses/google-gdk-license
-          echo "e9acab5b5fbb560a72cfaecce8946896ff6aab9d" > $ANDROID_SDK_ROOT/licenses/android-googletv-license
+          yes | sdkmanager --licenses || true
 
-      - name: Get dependencies
+      # 5. Устанавливаем зависимости
+      - name: Get packages
         run: flutter pub get
 
-      - name: Build RELEASE APK  # ← КЛЮЧЕВОЕ ИЗМЕНЕНИЕ!
+      # 6. Собираем APK
+      - name: Build APK
         run: |
+          echo "=== Сборка новой версии ==="
+          flutter clean
           flutter build apk --release --no-tree-shake-icons
+          echo "✅ APK собран!"
 
-      - name: Verify APK exists
+      # 7. Переименовываем APK с версией
+      - name: Rename APK with version
         run: |
-          ls -lh build/app/outputs/flutter-apk/
-          echo "APK файл: $(ls build/app/outputs/flutter-apk/app-*.apk)"
+          VERSION=$(grep "version:" pubspec.yaml | sed "s/version: //" | tr -d ' ' | tr '+' '-')
+          cp build/app/outputs/flutter-apk/app-release.apk "tension-app-v${VERSION}.apk"
+          echo "📱 Файл: tension-app-v${VERSION}.apk"
 
-      - name: Upload APK as workflow artifact
+      # 8. Загружаем артефакт
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: App-v${{ env.APP_VERSION_NAME }}-build-${{ github.run_number }}
-          path: build/app/outputs/flutter-apk/app-release.apk  # ← Теперь он существует!
-          retention-days: 14
+          name: tension-ceiling-app-NEW
+          path: tension-app-*.apk
+          retention-days: 1  # Храним только 1 день
