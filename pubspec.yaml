@@ -1,6 +1,6 @@
 name: tension_ceiling_app
 description: Приложение для смет натяжных потолков
-version: 1.0.5+5  # ← УВЕЛИЧЬТЕ до этой версии!
+version: 1.0.6+6  # ← УВЕЛИЧЬТЕ до этой версии!
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
