@@ -1,97 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:tension_ceiling_app/screens/estimate_list_screen.dart';
-import 'package:tension_ceiling_app/screens/template_screen.dart';
-import 'package:tension_ceiling_app/screens/calculator_screen.dart';
-import 'package:tension_ceiling_app/screens/history_screen.dart';
-import 'package:tension_ceiling_app/screens/import_screen.dart';
-import 'package:tension_ceiling_app/screens/settings_screen.dart';
+import 'estimate_edit_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-  
-  final List<Widget> _screens = [
-    EstimateListScreen(),
-    TemplateScreen(),
-    CalculatorScreen(),
-    HistoryScreen(),
-    SettingsScreen(),
-  ];
-  
-  final List<String> _appBarTitles = [
-    'Мои сметы',
-    'Шаблоны',
-    'Калькулятор',
-    'История',
-    'Настройки',
-  ];
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_appBarTitles[_currentIndex]),
-        actions: _currentIndex == 0 ? [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ImportScreen(),
+        title: const Text('Сметы натяжных потолков'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Заголовок
+              const Icon(
+                Icons.calculate,
+                size: 80,
+                color: Colors.blue,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Сметы натяжных потолков',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
-              );
-            },
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Создавайте и управляйте сметами для монтажа натяжных потолков',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+              
+              const SizedBox(height: 40),
+              
+              // Основная кнопка
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EstimateEditScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text(
+                    'СОЗДАТЬ НОВУЮ СМЕТУ',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 24,
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Вторичная кнопка (пока неактивна)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // TODO: На этапе 4 добавим переход к списку смет
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Функция будет доступна на следующем этапе'),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.list_alt),
+                  label: const Text('ПРОСМОТРЕТЬ ВСЕ СМЕТЫ'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 24,
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 40),
+              
+              // Информация
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Этап 3 из 5',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Сейчас вы можете создавать новые сметы с позициями и автоматическим расчетом стоимости.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ] : null,
+        ),
       ),
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Сметы',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_books),
-            label: 'Шаблоны',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calculate),
-            label: 'Калькулятор',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'История',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Настройки',
-          ),
-        ],
-      ),
-      floatingActionButton: _currentIndex == 0 ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EstimateEditScreen(),
-            ),
-          );
-        },
-        child: Icon(Icons.add),
-      ) : null,
     );
   }
 }
