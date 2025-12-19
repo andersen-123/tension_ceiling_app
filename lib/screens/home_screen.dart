@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Сметы натяжных потолков'),
+        title: const Text('Сметы v1.0.5'),
         centerTitle: true,
         actions: [
           // Кнопка создания новой сметы в AppBar
