@@ -1,0 +1,58 @@
+name: Build Flutter APK
+
+on:
+  workflow_dispatch:  # Только по кнопке Run workflow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. Получить код
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # 2. Настроить Flutter
+    - name: ⚙️ Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.9'
+        
+    # 3. Установить зависимости
+    - name: 📦 Get packages
+      run: |
+        echo "=== УСТАНОВКА ЗАВИСИМОСТЕЙ ==="
+        flutter pub get
+        echo "✅ Зависимости установлены"
+        
+    # 4. ОЧИСТИТЬ кеш (ВАЖНО!)
+    - name: 🧹 Clean build cache
+      run: |
+        echo "=== ОЧИСТКА КЕША ==="
+        flutter clean
+        rm -rf build/
+        echo "✅ Кеш очищен"
+        
+    # 5. Собрать APK
+    - name: 🔨 Build APK
+      run: |
+        echo "=== НАЧАЛО СБОРКИ НОВОЙ ВЕРСИИ ==="
+        echo "Дата: $(date)"
+        echo "Хэш: ${{ github.sha }}"
+        flutter build apk --release --no-tree-shake-icons
+        echo "✅ APK СОБРАН!"
+        
+    # 6. Проверить что собралось
+    - name: 🔍 Verify APK
+      run: |
+        echo "=== ПРОВЕРКА ФАЙЛА ==="
+        ls -la build/app/outputs/flutter-apk/
+        echo "📱 Размер APK:"
+        du -h build/app/outputs/flutter-apk/app-release.apk
+        
+    # 7. Загрузить артефакт с НОВЫМ именем
+    - name: ⬆️ Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: NEW-APP-VERSION-$(date +%Y%m%d-%H%M%S)  # Уникальное имя
+        path: build/app/outputs/flutter-apk/app-release.apk
